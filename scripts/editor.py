@@ -3,6 +3,8 @@ import json
 
 from scripts.gui import Button, GuiManager
 
+TILE_SIZE = 8
+
 class Editor:
     def __init__(self):
         self.display = pygame.display.set_mode((700, 700))
@@ -19,7 +21,7 @@ class Editor:
             self.block_images.append(block[4])
             block.remove(block[4])
 
-        self.tiles = ["assets/images/player_walk1.png"]
+        self.tiles = ["assets/images/tiles/grass.png", "assets/images/tiles/dirt.png"]
 
         self.clicking = False
         self.select_image = None
@@ -78,14 +80,13 @@ class Editor:
             if my > 30:
                 if self.clicking:
                     should_place = False
-                    print( [((mx)//16)*16, ((my)//16)*16, 16, 16])
-                    if not [((mx)//16)*16, ((my)//16)*16, 16, 16] in self.blocks["map"]:
-                        self.blocks["map"].append([((mx) // 16)*16, ((my) //16)*16, 16, 16])
+                    if not [((mx)//TILE_SIZE)*TILE_SIZE, ((my)//TILE_SIZE)*TILE_SIZE, TILE_SIZE, TILE_SIZE] in self.blocks["map"]:
+                        self.blocks["map"].append([((mx) // TILE_SIZE)*TILE_SIZE, ((my) //TILE_SIZE)*TILE_SIZE, TILE_SIZE, TILE_SIZE])
                         self.block_images.append(self.select_image)
 
                 if self.removing:
                     for idx, block in enumerate(self.blocks["map"]):
-                        if self.blocks["map"][idx] == [((mx) // 16) * 16, ((my) // 16) * 16, 16, 16]:
+                        if self.blocks["map"][idx] == [((mx) // TILE_SIZE) * TILE_SIZE, ((my) // TILE_SIZE) * TILE_SIZE, TILE_SIZE, TILE_SIZE]:
                             self.blocks["map"].pop(idx)
                             self.block_images.pop(idx)
 

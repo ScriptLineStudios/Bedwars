@@ -14,10 +14,10 @@ class Server:
         self.data = {}
         self.data_type = None
 
-        self.cluster = MongoClient("")
-        self.db = self.cluster["pygame-sockets"]
-        self.collection = self.db["user-data"]
-        self.collection.delete_many({});
+        # self.cluster = MongoClient("ok")
+        # self.db = self.cluster["pygame-sockets"]
+        # self.collection = self.db["user-data"]
+        # self.collection.delete_many({});
 
         self.request_types = {
             "login": "login",
@@ -32,6 +32,8 @@ class Server:
         }
         self.player_data = player_data
 
+        print("Server created and listening...")
+
     def sign_up_user(self, payload: dict, address: tuple) -> None:
         '''
             Method for allowing the creation of a new user on the database
@@ -42,7 +44,7 @@ class Server:
         password = payload["password"]
         print("Incoming connection...")
         self.active_connections.append(address) 
-        self.collection.insert_one({ "name": username, "password": password, "user_data": {}})
+       # self.collection.insert_one({ "name": username, "password": password, "user_data": {}})
         player_data = [
         200, 200, 0, 0, 0, 0, 0, 0, 0, True, 0, 0 #rect_x, rect_y, scroll x, scroll y, movement x,
             # movement y, vertical momentum, air timer, animation index, 

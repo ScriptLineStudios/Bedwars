@@ -36,8 +36,6 @@ class Game:
             "jumping": False
         }
 
-
-
         self.camera = [0, 0]
         self.screen = pygame.display.set_mode((1000, 800))
         self.display = pygame.Surface((200, 150))
@@ -57,7 +55,7 @@ class Game:
             rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
             self.tiles.append(Tile(rect=rect, color=(100, 100, 100), image=tile[4]))
 
-        self.player = Player(200, 200)
+        self.player = Player(100, 200)
 
         self.gui_manager = GuiManager([])  
 
@@ -103,14 +101,8 @@ class Game:
             request_json = self.client.create_json_object(json).encode()
             self.client.send_data(request_json)
 
-            print(f"Predicted X: {self.player.rect.x}")
-            print(f"Predicted Y: {self.player.rect.y}")
-
-
             for name, packet in self.client.data.items(): #Handles incoming packets
                 if name == self.username:
-                    print(packet)
-
                     if abs(packet[0] - self.player.rect.x) > 75:
                         self.player.rect.x = packet[0]
                         self.player.camera.x = packet[2]
@@ -145,6 +137,6 @@ class Game:
             self.screen.blit(pygame.transform.scale(self.display, (1000, 800)), (0, 0))
             pygame.display.flip()
             self.clock.tick(self.FPS)
-
+    @staticmethod
     def run(self):
         self.main()

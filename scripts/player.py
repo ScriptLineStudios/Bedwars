@@ -16,10 +16,20 @@ class Player(Entity):
         self.is_on_ground = False
         self.rect = pygame.Rect(self.x, self.y, 16, 16)
 
-        self.walk_images = [self.load_image("player_walk1"), self.load_image("player_walk2"), self.load_image("player_walk3")]
+        self.walk_images = [self.load_image("player_walk1"), self.load_image("player_walk2"), self.load_image("player_walk3"), 
+        self.load_image("player_walk4")]
+        
+        self.idle_images = [self.load_image("player_idle1"), self.load_image("player_idle2")]
+        
+
         self.animation_index = 0
         
         self.camera = pygame.math.Vector2()
+
+        self.player_movement = {"horizontal": 0, "vertical": self.y_velocity}
+        self.facing_right = True
+        self.moving = False
+
 
     def get_colliding_tiles(
         self, tiles: List[Tile], player_rect: pygame.Rect
@@ -32,7 +42,7 @@ class Player(Entity):
             if tile.rect.colliderect(player_rect):
                 return_tiles.append(tile)
 
-        return tiles
+        return return_tiles
 
     def calculate_rect(
         self, movement: dict, player_rect: pygame.Rect, map_tiles: List[Tile]
@@ -51,6 +61,7 @@ class Player(Entity):
 
         self.is_on_ground = False
         player_rect.y += movement["vertical"]
+        tiles = self.get_colliding_tiles(map_tiles, player_rect)
         for tile in tiles:
             if tile.collision(player_rect):
                 if movement["vertical"] > 0:
@@ -66,17 +77,21 @@ class Player(Entity):
         Handles all code relating to the movement of the player
         """
 
-        player_movement = {"horizontal": 0, "vertical": self.y_velocity}
+        self.player_movement = {"horizontal": 0, "vertical": self.y_velocity}
 
         if key_presses["a"]:
-            player_movement["horizontal"] -= self.SPEED
+            self.player_movement["horizontal"] -= self.SPEED
+            self.facing_right = False
         if key_presses["d"]:
-            player_movement["horizontal"] += self.SPEED
+            self.player_movement["horizontal"] += self.SPEED
+            self.facing_right = True
+
+        self.moving = bool(self.player_movement["horizontal"])
 
         if self.y_velocity < 3:
             self.y_velocity += 0.2
 
-        self.rect = self.calculate_rect(player_movement, self.rect, tiles)
+        self.rect = self.calculate_rect(self.player_movement, self.rect, tiles)
         
 
     def draw(self, display) -> None:
@@ -84,9 +99,16 @@ class Player(Entity):
         Draws the player at the rect position
         """
         mx, my = pygame.mouse.get_pos()
-        self.camera.x += (self.rect.x-self.camera.x-100+mx/50)/7
-        self.camera.y += (self.rect.y-self.camera.y-75+my/50)/7
+        self.camera.x += (self.rect.x-self.camera.x-100+mx/200)/7
+        self.camera.y += (self.rect.y-self.camera.y-75+my/200)/7
 
-
-        self.animation_index = self.animate(self.walk_images, self.animation_index, 15)
-        display.blit(self.walk_images[self.animation_index//15], (self.rect.x-self.camera.x, self.rect.y-self.camera.y))
+        if self.moving:    
+            self.animation_index = self.animate(self.walk_images, self.animation_index, 15)
+            display.blit(
+                pygame.transform.flip(self.walk_images[self.animation_index//15], not self.facing_right, False), 
+                (self.rect.x-self.camera.x, self.rect.y-self.camera.y))
+        else:
+            self.animation_index = self.animate(self.idle_images, self.animation_index, 15)
+            display.blit(
+                pygame.transform.flip(self.idle_images[self.animation_index//15], not self.facing_right, False), 
+                (self.rect.x-self.camera.x, self.rect.y-self.camera.y))

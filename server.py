@@ -33,7 +33,6 @@ def calculate_rect(
     """
     player_rect.x += player[4]
     tiles = get_colliding_tiles(map_tiles, player_rect)
-    print(tiles)
     for tile in tiles:
         if player[4] > 0:
             player_rect.right = tile.rect.left

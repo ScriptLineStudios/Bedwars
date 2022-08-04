@@ -14,7 +14,7 @@ class Server:
         self.data = {}
         self.data_type = None
 
-        self.cluster = MongoClient("mongodb+srv://scriptline:VwuyimDwh81IVaqE@cluster0.2gjvk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+        self.cluster = MongoClient("")
         self.db = self.cluster["pygame-sockets"]
         self.collection = self.db["user-data"]
         self.collection.delete_many({});

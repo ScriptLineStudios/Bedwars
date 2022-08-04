@@ -46,7 +46,7 @@ class Server:
         self.active_connections.append(address) 
        # self.collection.insert_one({ "name": username, "password": password, "user_data": {}})
         player_data = [
-        200, 200, 0, 0, 0, 0, 0, 0, 0, True, 0, 0 #rect_x, rect_y, scroll x, scroll y, movement x,
+        40, 200, 0, 0, 0, 0, 0, 0, 0, True, 0, 0 #rect_x, rect_y, scroll x, scroll y, movement x,
             # movement y, vertical momentum, air timer, animation index, 
             # facing right, prev x, prev y
         ]

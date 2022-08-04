@@ -11,8 +11,16 @@ clock = pygame.time.Clock()
 server = Server("127.0.0.1", 4444, [
             200, 200, 0, 0, #X, Y, camX, camY
             0, 0, #moveX, moveY
-            False, 3 #isOnGround, yVelocity
+            False, 3, #isOnGround, yVelocity
+            0, False # animation_index, moving
         ])
+
+def animate(image_list, animation_index, time_to_show_image_on_screen):
+    if animation_index+1 >= len(image_list)*time_to_show_image_on_screen:
+        animation_index = 0
+    animation_index += 1
+
+    return animation_index
 
 def get_colliding_tiles(tiles, player_rect: pygame.Rect):
     """
@@ -94,6 +102,6 @@ while True:
         server.users[username][0] = rect.x
         server.users[username][1] = rect.y
 
-
+        server.users[username][9] = bool(server.users[username][4]) #moving = is player moving
 
     server.distribute_data() #Distribute the updated user packet to all connected clients

@@ -55,7 +55,7 @@ class Game:
             rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
             self.tiles.append(Tile(rect=rect, color=(100, 100, 100), image=tile[4]))
 
-        self.player = Player(100, 200)
+        self.player = Player(40, 200)
 
         self.gui_manager = GuiManager([])  
 
@@ -85,8 +85,6 @@ class Game:
                         if self.player.is_on_ground:
                             self.player.y_velocity -= self.player.JUMP_HEIGHT
 
-
-
             keys = pygame.key.get_pressed()
             self.key_presses["a"] = keys[pygame.K_a]
             self.key_presses["d"] = keys[pygame.K_d]
@@ -109,21 +107,9 @@ class Game:
                     
                     if abs(packet[1] - self.player.rect.y) > 175:
                         self.player.rect.y = packet[1]
-                        self.player.camera.y = packet[3]
-                    '''              
-                    self.camera[0] = packet[2]
-                    self.camera[0] = packet[3]
-
-                    if abs(packet[0]-self.player.rect.x) > 75:
-                        self.player.rect.x = packet[0]
-                        self.player.camera.x = self.camera[0]
-                    if abs(packet[1]-self.player.rect.y) > 175:
-                        self.player.rect.x = packet[1]
-                        self.player.camera.x = self.camera[1]
-                    '''                 
+                        self.player.camera.y = packet[3]             
                 else:
-                    pygame.draw.rect(self.display, (255, 0, 0), (packet[0]-self.player.camera.x, packet[1]-self.player.camera.y, 16, 16))
-
+                    self.display.blit(self.player.idle_images[0], (packet[0]-self.player.camera.x, packet[1]-self.player.camera.y))
 
             self.player.handle_movement(self.key_presses, self.tiles)
             self.player.draw(self.display)
@@ -137,6 +123,7 @@ class Game:
             self.screen.blit(pygame.transform.scale(self.display, (1000, 800)), (0, 0))
             pygame.display.flip()
             self.clock.tick(self.FPS)
+
     @staticmethod
     def run(self):
         self.main()

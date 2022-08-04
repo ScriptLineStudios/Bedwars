@@ -93,7 +93,6 @@ class Player(Entity):
 
         self.rect = self.calculate_rect(self.player_movement, self.rect, tiles)
         
-
     def draw(self, display) -> None:
         """
         Draws the player at the rect position

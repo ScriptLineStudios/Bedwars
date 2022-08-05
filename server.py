@@ -61,10 +61,21 @@ def calculate_rect(
 
 with open("assets/map/map.json", "rb") as file:
     map_data = json.load(file)
+
+player_spawn_points = []
 tiles = []
+
 for tile in map_data["map"]:
     rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
-    tiles.append(Tile(rect=rect, color=(100, 100, 100), image=tile[4]))
+    
+    tile_name = tile[4].split("/")[-1].split(".")[0]
+            
+    if tile_name == "marker1": #Player_spawn_marker
+        player_spawn_points.append([tile[0], tile[1]])
+    else:
+        tiles.append(Tile(rect=rect, color=(100, 100, 100), image=tile[4]))
+
+server.spawn_points = player_spawn_points
 
 while True:
     server.receive_data()

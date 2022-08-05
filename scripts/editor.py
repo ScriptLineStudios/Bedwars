@@ -21,7 +21,8 @@ class Editor:
             self.block_images.append(block[4])
             block.remove(block[4])
 
-        self.tiles = ["assets/images/tiles/grass.png", "assets/images/tiles/dirt.png", "assets/images/bed.png"]
+        self.tiles = ["assets/images/tiles/grass.png", "assets/images/tiles/dirt.png", 
+        "assets/images/marker1.png", "assets/images/bed.png"]
 
         self.clicking = False
         self.select_image = None
@@ -31,7 +32,8 @@ class Editor:
 
         self.gui_manager = GuiManager([])
         for i, tile_type in enumerate(self.tiles):
-            self.gui_manager.gui_elements.append(Button(i*30, 10, tile_type, select_image))
+            self.gui_manager.gui_elements.append(Button(i*40, 10, tile_type, select_image,
+                pygame.image.load(tile_type).get_width()*4, pygame.image.load(tile_type).get_height()*4))
 
         self.events = None
         self.removing = False
@@ -132,7 +134,7 @@ class Editor:
 
 
             if not self.highlighting:
-                if my > 30:
+                if my > 60:
                     if self.clicking:
                         should_place = False
                         if not [((mx)//TILE_SIZE)*TILE_SIZE, ((my)//TILE_SIZE)*TILE_SIZE, TILE_SIZE, TILE_SIZE] in self.blocks["map"]:

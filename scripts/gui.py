@@ -41,7 +41,7 @@ class GuiManager:
             element.draw(display)
 
 class Button(UIElement):
-    def __init__(self, x: int, y: int, image: str, function):
+    def __init__(self, x: int, y: int, image: str, function, width = None, height = None):
         super().__init__(x, y)
 
         self.pressing_button = False
@@ -49,6 +49,9 @@ class Button(UIElement):
 
         self.image_name = image
         self.image = pygame.image.load(image)
+
+        if width is not None and height is not None:
+            self.image = pygame.transform.scale(self.image, (width, height))
 
     def handle_events(self, events: list) -> None:
         for event in events:

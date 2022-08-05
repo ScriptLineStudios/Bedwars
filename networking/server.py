@@ -34,6 +34,8 @@ class Server:
 
         print("Server created and listening...")
 
+        self.number_users = 0 
+
     def sign_up_user(self, payload: dict, address: tuple) -> None:
         '''
             Method for allowing the creation of a new user on the database
@@ -46,11 +48,31 @@ class Server:
         self.active_connections.append(address) 
        # self.collection.insert_one({ "name": username, "password": password, "user_data": {}})
         player_data = [
-        40, 200, 0, 0, 0, 0, 0, 0, 0, True, 0, 0 #rect_x, rect_y, scroll x, scroll y, movement x,
-            # movement y, vertical momentum, air timer, animation index, 
-            # facing right, prev x, prev y
+            40, 200, 0, 0, #X, Y, camX, camY
+            0, 0, #moveX, moveY
+            False, 3, #isOnGround, yVelocity
+            0, False, # animation_index, moving
+            
+            0 #Number players
         ]
+
+        player_data = {
+            "X": 40,           #0
+            "Y": 200,           #1
+            "camX": 0, 
+            "camY": 0,
+            "moveX": 0, 
+            "moveY": 0, 
+            "isOnGround": False,
+            "yVelocity": 3, 
+            "animationIndex": 0, 
+            "moving": False, 
+            
+            "numberPlayers": 0
+        }
+
         self.users[username] = player_data #Construct a new user
+        self.number_users += 1
 
     def login_user(self, payload: dict, address: tuple) -> None:
         '''
@@ -84,6 +106,9 @@ class Server:
             del self.users[client_name]
 
     def distribute_data(self) -> None:
+        for name in iter(self.users):
+            self.users[name]["numberPlayers"] = self.number_users
+
         for connection in self.active_connections:
             self.server.sendto(json.dumps(self.users).encode(), connection)
         

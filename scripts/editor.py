@@ -46,14 +46,14 @@ class Editor:
 
         self.copied_blocks = []
         self.copied_block_images = []
-
-    def main(self):
+        
         while True:
 
             mx, my = pygame.mouse.get_pos()
             mx += self.offset_x
             my += self.offset_y
             self.display.fill((0, 0, 0))
+
             for index, block in enumerate(self.blocks["map"]):
                 self.display.blit(pygame.image.load(self.block_images[index]), (block[0]-self.offset_x, block[1]-self.offset_y, block[2], block[3]))
             
@@ -71,6 +71,18 @@ class Editor:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e:
                         self.highlighting = not self.highlighting       
+
+                    if event.key == pygame.K_q and self.highlighting:
+                        x_lower_bound = self.highlight_rect.topright[0] + self.offset_x
+                        x_upper_bound = self.highlight_rect.topleft[0] + self.offset_x
+
+                        y_lower_bound = self.highlight_rect.bottomright[1] + self.offset_y
+                        y_upper_bound = self.highlight_rect.topleft[1] + self.offset_y
+                        
+                        for idx, block in enumerate(self.blocks["map"]):
+                            if (block[0] < x_lower_bound and block[0] > x_upper_bound and block[1] < y_lower_bound and block[1] > y_upper_bound):
+                                self.blocks["map"].pop(idx)
+                                self.block_images.pop(idx)
 
                     if event.key == pygame.K_c and self.highlighting:
                         self.copied_blocks = []

@@ -39,22 +39,22 @@ def calculate_rect(
     """
     Calculates the Rect of the player based on their movement and the surrounding tiles
     """
-    player_rect.x += player[4]
+    player_rect.x += player["moveX"]
     tiles = get_colliding_tiles(map_tiles, player_rect)
     for tile in tiles:
-        if player[4] > 0:
+        if player["moveX"] > 0:
             player_rect.right = tile.rect.left
-        if player[4] < 0:
+        if player["moveX"] < 0:
             player_rect.left = tile.rect.right
 
-    player[6] = False
-    player_rect.y += player[7]
+    player["isOnGround"] = False
+    player_rect.y += player["yVelocity"]
     tiles = get_colliding_tiles(map_tiles, player_rect)
     for tile in tiles:
-        if player[7] > 0:
+        if player["yVelocity"] > 0:
             player_rect.bottom = tile.rect.top
-            player[6] = True
-        if player[7] < 0:
+            player["isOnGround"] = True
+        if player["yVelocity"] < 0:
             player_rect.top = tile.rect.bottom
 
     return player_rect
@@ -78,30 +78,30 @@ while True:
     
     if server.data_type == "data":
         username = payload["username"] #Get the username of the sender
-        server.users[username][4] = 0
-        server.users[username][5] = 0
+        server.users[username]["moveX"] = 0
+        server.users[username]["moveY"] = 0
 
         if payload["left"]:
-            server.users[username][4] -= 2
+            server.users[username]["moveX"] -= 2
         if payload["right"]:
-            server.users[username][4] += 2
+            server.users[username]["moveX"] += 2
         if payload["jumping"]:
-            if server.users[username][6]:
-                server.users[username][7] -= 7
+            if server.users[username]["isOnGround"]:
+                server.users[username]["yVelocity"] -= 7
 
-        if server.users[username][7] < 3:
-            server.users[username][7] += 0.2
+        if server.users[username]["yVelocity"] < 3:
+            server.users[username]["yVelocity"] += 0.2
 
-        rect = calculate_rect([server.users[username][4], server.users[username][5]], 
-            pygame.Rect(server.users[username][0], server.users[username][1], 16, 16), tiles, 
+        rect = calculate_rect([server.users[username]["moveX"], server.users[username]["moveY"]], 
+            pygame.Rect(server.users[username]["X"], server.users[username]["Y"], 16, 16), tiles, 
             server.users[username])
             
-        server.users[username][2] += (rect.x-server.users[username][2]-100) / 7
-        server.users[username][3] += (rect.y-server.users[username][3]-75) / 7
+        server.users[username]["camX"] += (rect.x-server.users[username]["camX"]-100) / 7
+        server.users[username]["camY"] += (rect.y-server.users[username]["camY"]-75) / 7
 
-        server.users[username][0] = rect.x
-        server.users[username][1] = rect.y
+        server.users[username]["X"] = rect.x
+        server.users[username]["Y"] = rect.y
 
-        server.users[username][9] = bool(server.users[username][4]) #moving = is player moving
+        server.users[username]["moving"] = bool(server.users[username]["moveX"]) #moving = is player moving
 
     server.distribute_data() #Distribute the updated user packet to all connected clients

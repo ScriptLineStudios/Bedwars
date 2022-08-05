@@ -1,2 +1,2 @@
 # Bedwars
-Bedwars. Yes
+Bedwars. 

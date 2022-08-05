@@ -47,14 +47,6 @@ class Server:
         print("Incoming connection...")
         self.active_connections.append(address) 
        # self.collection.insert_one({ "name": username, "password": password, "user_data": {}})
-        player_data = [
-            40, 200, 0, 0, #X, Y, camX, camY
-            0, 0, #moveX, moveY
-            False, 3, #isOnGround, yVelocity
-            0, False, # animation_index, moving
-            
-            0 #Number players
-        ]
 
         player_data = {
             "X": 40,           #0

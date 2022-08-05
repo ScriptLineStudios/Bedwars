@@ -115,7 +115,7 @@ class Game:
                         self.player.rect.y = packet["Y"]
                         self.player.camera.y = packet["camY"]             
                 else:
-                    self.display.blit(self.player.idle_images[0], (packet["camX"]-self.player.camera.x, packet["camY"]-self.player.camera.y))
+                    self.display.blit(self.player.idle_images[0], (packet["X"]-self.player.camera.x, packet["Y"]-self.player.camera.y))
 
             self.player.handle_movement(self.key_presses, self.tiles)
             self.player.draw(self.display)

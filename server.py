@@ -3,6 +3,8 @@ from scripts.player import Player
 from main import Game
 from scripts.tile import Tile
 
+from scripts.inventory import Iron
+
 import pygame
 import json
 
@@ -14,6 +16,12 @@ server = Server("127.0.0.1", 4444, [
             False, 3, #isOnGround, yVelocity
             0, False # animation_index, moving
         ])
+
+server.users["WORLD_DATA"] = {
+    "items": [[-88, 404, 8, 8, "iron"]]
+}
+
+print(server.users)
 
 def animate(image_list, animation_index, time_to_show_image_on_screen):
     if animation_index+1 >= len(image_list)*time_to_show_image_on_screen:
@@ -106,6 +114,10 @@ while True:
         rect = calculate_rect([server.users[username]["moveX"], server.users[username]["moveY"]], 
             pygame.Rect(server.users[username]["X"], server.users[username]["Y"], 16, 16), tiles, 
             server.users[username])
+
+        for item in server.users["WORLD_DATA"]["items"]:
+            if pygame.Rect(item[0], item[1], item[2], item[3]).colliderect(rect):
+                server.users["WORLD_DATA"]["items"].remove(item)
             
         server.users[username]["camX"] += (rect.x-server.users[username]["camX"]-100) / 7
         server.users[username]["camY"] += (rect.y-server.users[username]["camY"]-75) / 7

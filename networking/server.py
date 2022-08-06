@@ -34,7 +34,7 @@ class Server:
 
         print("Server created and listening...")
 
-        self.number_users = 0 
+        self.number_users = 0
         self.spawn_points = []
 
     def sign_up_user(self, payload: dict, address: tuple) -> None:

@@ -13,6 +13,13 @@ from typing import List
 import json
 import threading
 
+screen = pygame.display.set_mode((1000, 800))
+
+inventory_slot = pygame.transform.scale(pygame.image.load("assets/images/slot.png").convert(), (12, 12))
+
+iron_img = pygame.image.load("assets/images/iron.png").convert()
+iron_img.set_colorkey((255, 255, 255))
+
 class Game:
     FPS = 60
     def __init__(self):
@@ -38,7 +45,7 @@ class Game:
         }
 
         self.camera = [0, 0]
-        self.screen = pygame.display.set_mode((1000, 800))
+        self.screen = screen
 
         self.display = pygame.Surface((200, 150))
         self.minimap = pygame.Surface((500, 400))
@@ -53,7 +60,7 @@ class Game:
         self.key_presses = {"a": False, "d": False}
 
         self.inventory = [None, None, None, None, None]
-        self.items = [Iron(-88, 404, 8, 8)]
+        self.items = []
 
         with open("assets/map/map.json", "rb") as file:
             map_data = json.load(file)
@@ -85,10 +92,7 @@ class Game:
         receive_thread = threading.Thread(target=self.client.receive_data)
         receive_thread.start()
 
-        inventory_slot = pygame.transform.scale(pygame.image.load("assets/images/slot.png").convert(), (12, 12))
 
-        iron_img = pygame.image.load("assets/images/iron.png").convert()
-        iron_img.set_colorkey((255, 255, 255))
 
         while self.running:
             self.display.fill((125, 233, 255))
@@ -97,6 +101,11 @@ class Game:
 
             for i, slot in enumerate(self.inventory):
                 self.display.blit(inventory_slot, (10+i*12, 10))
+                if slot is not None:
+                    self.display.blit(pygame.transform.scale(
+                        slot[1], (slot[1].get_width()/2, slot[1].get_height()/2)), 
+                        ((10+i*12)+slot[1].get_width()/4 - 2, 10+slot[1].get_height()/8))
+
 
             self.events = pygame.event.get()
             for event in self.events:
@@ -139,7 +148,14 @@ class Game:
                     if abs(packet["Y"] - self.player.rect.y) > 175:
                         print(f"Adju Y: Predicted: {self.player.rect.y}, actual: {packet['Y']}")
                         self.player.rect.y = packet["Y"]
-                        self.player.camera.y = packet["camY"]             
+                        self.player.camera.y = packet["camY"]   
+                elif name == "WORLD_DATA":
+                    print(packet["items"])
+                    for item in packet["items"]:
+                        if item[-1] == "iron":
+                            self.items.append(Iron(item[0], item[1], 
+                                item[2], item[3], iron_img, 
+                                "iron")) #ngl this solution kinda sucks, but it will do for now...
                 else:
                     self.display.blit(self.player.idle_images[0], (packet["X"]-self.player.camera.x, packet["Y"]-self.player.camera.y))
 

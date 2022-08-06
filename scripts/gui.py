@@ -31,6 +31,12 @@ class GuiManager:
 
         return self.gui_elements[index]
 
+    def add_element(self, element: UIElement):
+        self.gui_elements.append(element)
+    
+    def remove_element(self, element: UIElement):
+        self.gui_elements.remove(element)
+
     def draw_gui_elements(self, display: pygame.Surface, events: list) -> None:
         """
         Draws each ui element
@@ -76,15 +82,24 @@ class Text(UIElement):
         self.size = size
 
         self.text = text
+        self.regularText = pygame.font.Font('assets/font/font.ttf', self.size)
 
+        self._render_text = self.regularText.render(self.text, False, (255, 255, 255))
+
+
+    def update_text(self, new_text):
+        self.text = new_text
+        self._render_text = self.regularText.render(self.text, False, (255, 255, 255))
 
     def render_text(self, display, word, pos):
-        for index, letter in enumerate(word):
+        """for index, letter in enumerate(word):
                 img = alphabet[letter]
                 if letter == " ":
                     display.blit(img, ((pos[0]+index*32), pos[1]))
                 else:
-                    display.blit(img, ((pos[0]+index*7), pos[1]))      
+                    display.blit(img, ((pos[0]+index*7), pos[1]))    """
+
+        display.blit(self._render_text, (pos[0], pos[1]))  
 
     def draw(self, display: pygame.Surface) -> None:
         """

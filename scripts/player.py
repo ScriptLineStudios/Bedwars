@@ -92,7 +92,11 @@ class Player(Entity):
             self.y_velocity += 0.2
 
         self.rect = self.calculate_rect(self.player_movement, self.rect, tiles)
-        
+
+
+    def get_rect(self):
+        return pygame.Rect(self.rect.x-self.camera.x, self.rect.y-self.camera.y, 16, 16)
+
     def draw(self, display) -> None:
         """
         Draws the player at the rect position

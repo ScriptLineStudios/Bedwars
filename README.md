@@ -7,3 +7,8 @@
   </br>
 </div>
 <p>An online bedwars game written in Python and Pygame</p>
+<div align="center">
+  <h1>Credits</h1>
+</div>
+<p>Network Programming - <a href="url">github.com/ScriptLineStudios</a></p>
+<p>Artwork, Graphical Effects - <a href="url">https://github.com/SkysurferKon/</a></p>

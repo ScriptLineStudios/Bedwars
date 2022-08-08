@@ -36,6 +36,7 @@ class Server:
 
         self.number_users = 0
         self.spawn_points = []
+        self.resource_spawn_points = []
 
     def sign_up_user(self, payload: dict, address: tuple) -> None:
         '''
@@ -81,12 +82,12 @@ class Server:
                 print(document["user_data"])
                 self.users[username] = document["user_data"]
 
-    def receive_data(self) -> None:
+    def receive_data(self) -> object:
         msg = self.server.recvfrom(self.buffer_size)
-        self.data = json.loads(msg[0].decode())
+        data = json.loads(msg[0].decode())
         address = msg[1]
-        self.data_type = self.data["type"]
-        payload = self.data["payload"]
+        self.data_type = data["type"]
+        payload = data["payload"]
         if self.data_type == "sign up":
             self.sign_up_user(payload, address)
         elif self.data_type == "login":
@@ -97,6 +98,8 @@ class Server:
             self.collection.update_one({"name": client_name}, {"$set":{"user_data": self.users[client_name]}})
             self.active_connections.remove(address)
             del self.users[client_name]
+
+        return data 
 
     def distribute_data(self) -> None:
         for name in iter(self.users):

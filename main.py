@@ -61,6 +61,7 @@ class Game:
 
         self.inventory = [None, None, None, None, None]
         self.items = []
+        self.handled_items = []
 
         with open("assets/map/map.json", "rb") as file:
             map_data = json.load(file)
@@ -69,7 +70,7 @@ class Game:
             rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
             tile_name = tile[4].split("/")[-1].split(".")[0]
             
-            if tile_name == "marker1": #Player_spawn_marker
+            if tile_name == "marker1" or tile_name == "marker2": #Player_spawn_marker
                 pass
             else:
                 self.tiles.append(Tile(rect=rect, color=(100, 100, 100), image=tile[4]))
@@ -87,14 +88,15 @@ class Game:
             display.blit(tile.image, (tile.rect.x-self.player.camera.x, tile.rect.y-self.player.camera.y))
             self.minimap.blit(tile.image, (tile.rect.x-self.player.camera.x, tile.rect.y-self.player.camera.y + 255))
 
+    def lerp(self, number, lerp_to, speed):
+        return number + (lerp_to-number)* speed
 
     def main(self):
         receive_thread = threading.Thread(target=self.client.receive_data)
         receive_thread.start()
 
-
-
         while self.running:
+
             self.display.fill((125, 233, 255))
             self.minimap.fill(pygame.Color("black"))
             pygame.display.set_caption(f"{self.clock.get_fps()}")
@@ -104,7 +106,7 @@ class Game:
                 if slot is not None:
                     self.display.blit(pygame.transform.scale(
                         slot[1], (slot[1].get_width()/2, slot[1].get_height()/2)), 
-                        ((10+i*12)+slot[1].get_width()/4 - 2, 10+slot[1].get_height()/8))
+                            ((10+i*12)+slot[1].get_width()/4 - 2, 10+slot[1].get_height()/8))
 
 
             self.events = pygame.event.get()
@@ -136,26 +138,30 @@ class Game:
             }
             request_json = self.client.create_json_object(json).encode()
             self.client.send_data(request_json)
+            self.payload["jumping"] = False
 
             for name, packet in self.client.data.items(): #Handles incoming packets
                 if name == self.username:
-                    pygame.draw.rect(self.display, (255, 0, 0), (packet["X"]-packet["camX"], packet["Y"]-packet["camY"], 16, 16), 1)
-                    if abs(packet["X"] - self.player.rect.x) > 75:
-                        print(f"Adju X: Predicted: {self.player.rect.x}, actual: {packet['X']}")
-                        self.player.rect.x = packet["X"]
-                        self.player.camera.x = packet["camX"]
+                    if abs((packet["X"]-packet["camX"]) - (self.player.rect.x-self.player.camera.x)) > 3:
+                         self.player.rect.x = self.lerp(self.player.rect.x, packet["X"], 0.5)
+                         self.player.camera.x = self.lerp(self.player.camera.x, packet["camX"], 0.5)
                     
-                    if abs(packet["Y"] - self.player.rect.y) > 175:
-                        print(f"Adju Y: Predicted: {self.player.rect.y}, actual: {packet['Y']}")
-                        self.player.rect.y = packet["Y"]
-                        self.player.camera.y = packet["camY"]   
+                    if abs((packet["Y"]-packet["camY"]) - (self.player.rect.y-self.player.camera.y)) > 3:
+                         self.player.rect.y = self.lerp(self.player.rect.y, packet["Y"], 0.5)
+                         self.player.camera.y = self.lerp(self.player.camera.y, packet["camY"], 0.5)
+                    
                 elif name == "WORLD_DATA":
-                    print(packet["items"])
-                    for item in packet["items"]:
-                        if item[-1] == "iron":
-                            self.items.append(Iron(item[0], item[1], 
-                                item[2], item[3], iron_img, 
-                                "iron")) #ngl this solution kinda sucks, but it will do for now...
+                    pass
+
+                    
+                    #for item in packet["items"]:
+                        # if item[4] not in self.handled_items:
+                        #     if item[-1] == "iron":
+                        #         self.items.append(Iron(item[0], item[1], 
+                        #             item[2], item[3], iron_img, 
+                        #             "iron")) #ngl this solution kinda sucks, but it will do for now...                                
+
+                        #     self.handled_items.append(item[4])
                 else:
                     self.display.blit(self.player.idle_images[0], (packet["X"]-self.player.camera.x, packet["Y"]-self.player.camera.y))
 
@@ -169,8 +175,6 @@ class Game:
 
             self.render_map(self.display, self.tiles)
             self.gui_manager.draw_gui_elements(self.display, self.events)
-
-            self.payload["jumping"] = False
 
             self.screen.blit(pygame.transform.scale(self.display, (1000, 800)), (0, 0))
             self.screen.blit(pygame.transform.scale(self.minimap, (200,  150)), (700, 0))

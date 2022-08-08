@@ -1,5 +1,4 @@
 from networking.server import Server
-from scripts.player import Player
 from main import Game
 from scripts.tile import Tile
 
@@ -7,6 +6,9 @@ from scripts.inventory import Iron
 
 import pygame
 import json
+import random
+
+import threading
 
 clock = pygame.time.Clock()
 
@@ -18,10 +20,9 @@ server = Server("127.0.0.1", 4444, [
         ])
 
 server.users["WORLD_DATA"] = {
-    "items": [[-88, 404, 8, 8, "iron"]]
+    "items": []
 }
 
-print(server.users)
 
 def animate(image_list, animation_index, time_to_show_image_on_screen):
     if animation_index+1 >= len(image_list)*time_to_show_image_on_screen:
@@ -55,8 +56,8 @@ def calculate_rect(
         if player["moveX"] < 0:
             player_rect.left = tile.rect.right
 
-    player["isOnGround"] = False
     player_rect.y += player["yVelocity"]
+    player["isOnGround"] = False
     tiles = get_colliding_tiles(map_tiles, player_rect)
     for tile in tiles:
         if player["yVelocity"] > 0:
@@ -71,6 +72,7 @@ with open("assets/map/map.json", "rb") as file:
     map_data = json.load(file)
 
 player_spawn_points = []
+resource_spawn_points = []
 tiles = []
 
 for tile in map_data["map"]:
@@ -80,51 +82,71 @@ for tile in map_data["map"]:
             
     if tile_name == "marker1": #Player_spawn_marker
         player_spawn_points.append([tile[0], tile[1]])
+    elif tile_name == "marker2":
+        resource_spawn_points.append([tile[0], tile[1]])
     else:
         tiles.append(Tile(rect=rect, color=(100, 100, 100), image=tile[4]))
 
 server.spawn_points = player_spawn_points
+server.resource_spawn_points = resource_spawn_points
+
+resource_spawn_cooldown = 0
+
+def receive_data():
+    while True:
+        data = server.receive_data()
+        
+        if data == {}:
+            continue
+
+        payload = data["payload"]
+
+        if server.data_type == "data":
+            username = payload["username"] #Get the username of the sender
+
+            server.users[username]["moveX"] = 0
+            server.users[username]["moveY"] = 0
+
+            if payload["left"]:
+                server.users[username]["moveX"] -= 2
+            if payload["right"]:
+                server.users[username]["moveX"] += 2
+            if payload["jumping"]:
+                if server.users[username]["isOnGround"]:
+                    server.users[username]["yVelocity"] -= 7
+
+            if server.users[username]["yVelocity"] < 3:
+                server.users[username]["yVelocity"] += 0.2
+
+            rect = calculate_rect([server.users[username]["moveX"], server.users[username]["moveY"]], 
+                pygame.Rect(server.users[username]["X"], server.users[username]["Y"], 16, 16), tiles, 
+                    server.users[username])
+
+            for item in server.users["WORLD_DATA"]["items"]:
+                if pygame.Rect(item[0], item[1], item[2], item[3]).colliderect(rect):
+                    server.users["WORLD_DATA"]["items"].remove(item)
+                
+            server.users[username]["camX"] += (rect.x-server.users[username]["camX"]-100) / 7
+            server.users[username]["camY"] += (rect.y-server.users[username]["camY"]-75) / 7
+
+            server.users[username]["X"] = rect.x
+            server.users[username]["Y"] = rect.y
+
+            #print(server.users[username]["X"], server.users[username]["Y"])
+
+            server.users[username]["moving"] = bool(server.users[username]["moveX"]) #moving = is player moving
+
+thread = threading.Thread(target = receive_data).start()
 
 while True:
-    server.receive_data()
-    data = server.data
-    payload = data["payload"]
-    '''
-        The following section details the calculations that take place when the sever receives a data packet. These include changing the
-        player position, peforming physics calculations, animations, jumping etc.
-    '''
+    if resource_spawn_cooldown <= 0:
+        for point in resource_spawn_points:
+            server.users["WORLD_DATA"]["items"].append([point[0], point[1], 8, 8, "iron.png", "iron"])
+        resource_spawn_cooldown = 500
+    else:
+        resource_spawn_cooldown -= 1
 
-    
-    if server.data_type == "data":
-        username = payload["username"] #Get the username of the sender
-        server.users[username]["moveX"] = 0
-        server.users[username]["moveY"] = 0
-
-        if payload["left"]:
-            server.users[username]["moveX"] -= 2
-        if payload["right"]:
-            server.users[username]["moveX"] += 2
-        if payload["jumping"]:
-            if server.users[username]["isOnGround"]:
-                server.users[username]["yVelocity"] -= 7
-
-        if server.users[username]["yVelocity"] < 3:
-            server.users[username]["yVelocity"] += 0.2
-
-        rect = calculate_rect([server.users[username]["moveX"], server.users[username]["moveY"]], 
-            pygame.Rect(server.users[username]["X"], server.users[username]["Y"], 16, 16), tiles, 
-            server.users[username])
-
-        for item in server.users["WORLD_DATA"]["items"]:
-            if pygame.Rect(item[0], item[1], item[2], item[3]).colliderect(rect):
-                server.users["WORLD_DATA"]["items"].remove(item)
-            
-        server.users[username]["camX"] += (rect.x-server.users[username]["camX"]-100) / 7
-        server.users[username]["camY"] += (rect.y-server.users[username]["camY"]-75) / 7
-
-        server.users[username]["X"] = rect.x
-        server.users[username]["Y"] = rect.y
-
-        server.users[username]["moving"] = bool(server.users[username]["moveX"]) #moving = is player moving
+    for i, item in enumerate(server.users["WORLD_DATA"]["items"]):
+        server.users["WORLD_DATA"]["items"][i][3] += 1
 
     server.distribute_data() #Distribute the updated user packet to all connected clients

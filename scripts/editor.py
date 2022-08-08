@@ -22,7 +22,7 @@ class Editor:
             block.remove(block[4])
 
         self.tiles = ["assets/images/tiles/grass.png", "assets/images/tiles/dirt.png", 
-        "assets/images/marker1.png", "assets/images/bed.png"]
+        "assets/images/marker1.png", "assets/images/marker2.png", "assets/images/bed.png"]
 
         self.clicking = False
         self.select_image = None

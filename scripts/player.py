@@ -19,7 +19,9 @@ class Player(Entity):
         self.walk_images = [self.load_image("player_walk1"), self.load_image("player_walk2"), self.load_image("player_walk3"), 
         self.load_image("player_walk4")]
         
-        self.idle_images = [self.load_image("player_idle1"), self.load_image("player_idle2")]
+        self.idle_images = [self.load_image("player_idle1"), self.load_image("player_idle2"), 
+        self.load_image("player_idle3"), self.load_image("player_idle4"), 
+        self.load_image("player_idle5"), self.load_image("player_idle6")]
         
 
         self.animation_index = 0
@@ -93,7 +95,6 @@ class Player(Entity):
 
         self.rect = self.calculate_rect(self.player_movement, self.rect, tiles)
 
-
     def get_rect(self):
         return pygame.Rect(self.rect.x-self.camera.x, self.rect.y-self.camera.y, 16, 16)
 
@@ -102,16 +103,16 @@ class Player(Entity):
         Draws the player at the rect position
         """
         mx, my = pygame.mouse.get_pos()
-        self.camera.x += (self.rect.x-self.camera.x-100+mx/200)/7
-        self.camera.y += (self.rect.y-self.camera.y-75+my/200)/7
+        self.camera.x += (self.rect.x-self.camera.x-100)/7
+        self.camera.y += (self.rect.y-self.camera.y-75)/7
 
         if self.moving:    
-            self.animation_index = self.animate(self.walk_images, self.animation_index, 15)
+            self.animation_index = self.animate(self.walk_images, self.animation_index, 7)
             display.blit(
-                pygame.transform.flip(self.walk_images[self.animation_index//15], not self.facing_right, False), 
+                pygame.transform.flip(self.walk_images[self.animation_index//7], not self.facing_right, False), 
                 (self.rect.x-self.camera.x, self.rect.y-self.camera.y))
         else:
-            self.animation_index = self.animate(self.idle_images, self.animation_index, 15)
+            self.animation_index = self.animate(self.idle_images, self.animation_index, 7)
             display.blit(
-                pygame.transform.flip(self.idle_images[self.animation_index//15], not self.facing_right, False), 
+                pygame.transform.flip(self.idle_images[self.animation_index//7], not self.facing_right, False), 
                 (self.rect.x-self.camera.x, self.rect.y-self.camera.y))

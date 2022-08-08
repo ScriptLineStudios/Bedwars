@@ -10,5 +10,5 @@
 <div align="center">
   <h1>Credits</h1>
 </div>
-<p>Network Programming - <a href="url">"github.com/ScriptLineStudios" target="_blank">ScriptLine Studios</a></p>
-<p>Artwork, Graphical Effects - <a href="url">"https://github.com/SkysurferKon" target="_blank">SkysurferKon</a></p>
+<p>Network Programming - <a href="https://github.com/ScriptLineStudios/" target="_blank">ScriptLine Studios</a> 
+<p>Artwork, Graphical Effects - <a href="https://github.com/SkysurferKon/" target="_blank">SkysurferKon</a> 

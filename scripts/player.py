@@ -95,7 +95,6 @@ class Player(Entity):
 
         self.rect = self.calculate_rect(self.player_movement, self.rect, tiles)
 
-
     def get_rect(self):
         return pygame.Rect(self.rect.x-self.camera.x, self.rect.y-self.camera.y, 16, 16)
 

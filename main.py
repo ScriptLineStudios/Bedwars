@@ -88,6 +88,8 @@ class Game:
             display.blit(tile.image, (tile.rect.x-self.player.camera.x, tile.rect.y-self.player.camera.y))
             self.minimap.blit(tile.image, (tile.rect.x-self.player.camera.x, tile.rect.y-self.player.camera.y + 255))
 
+    def lerp(self, number, lerp_to, speed):
+        return number + (lerp_to-number)* speed
 
     def main(self):
         receive_thread = threading.Thread(target=self.client.receive_data)
@@ -137,23 +139,17 @@ class Game:
             request_json = self.client.create_json_object(json).encode()
             self.client.send_data(request_json)
             self.payload["jumping"] = False
-            
-            pygame.draw.rect(self.display, (255, 255, 0), (self.player.rect.x-self.player.camera.x, 
-                self.player.rect.y-self.player.camera.y, 16, 16), 1)
 
             for name, packet in self.client.data.items(): #Handles incoming packets
                 if name == self.username:
-                    pygame.draw.rect(self.display, (255, 0, 0), (packet["X"]-packet["camX"], packet["Y"]-packet["camY"], 16, 16), 1)
-                    #print(packet["X"], packet["Y"])
-                    if abs(packet["X"] - self.player.rect.x) > 75:
-                        print(f"Adju X: Predicted: {self.player.rect.x}, actual: {packet['X']}")
-                        self.player.rect.x = packet["X"]
-                        self.player.camera.x = packet["camX"]
+                    if abs((packet["X"]-packet["camX"]) - (self.player.rect.x-self.player.camera.x)) > 3:
+                         self.player.rect.x = self.lerp(self.player.rect.x, packet["X"], 0.5)
+                         self.player.camera.x = self.lerp(self.player.camera.x, packet["camX"], 0.5)
                     
-                    if abs(packet["Y"] - self.player.rect.y) > 275:
-                        print(f"Adju Y: Predicted: {self.player.rect.y}, actual: {packet['Y']}")
-                        self.player.rect.y = packet["Y"]
-                        self.player.camera.y = packet["camY"]   
+                    if abs((packet["Y"]-packet["camY"]) - (self.player.rect.y-self.player.camera.y)) > 3:
+                         self.player.rect.y = self.lerp(self.player.rect.y, packet["Y"], 0.5)
+                         self.player.camera.y = self.lerp(self.player.camera.y, packet["camY"], 0.5)
+                    
                 elif name == "WORLD_DATA":
                     pass
 
@@ -179,7 +175,6 @@ class Game:
 
             self.render_map(self.display, self.tiles)
             self.gui_manager.draw_gui_elements(self.display, self.events)
-
 
             self.screen.blit(pygame.transform.scale(self.display, (1000, 800)), (0, 0))
             self.screen.blit(pygame.transform.scale(self.minimap, (200,  150)), (700, 0))

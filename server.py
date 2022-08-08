@@ -56,8 +56,8 @@ def calculate_rect(
         if player["moveX"] < 0:
             player_rect.left = tile.rect.right
 
-    player["isOnGround"] = False
     player_rect.y += player["yVelocity"]
+    player["isOnGround"] = False
     tiles = get_colliding_tiles(map_tiles, player_rect)
     for tile in tiles:
         if player["yVelocity"] > 0:
@@ -103,6 +103,7 @@ def receive_data():
 
         if server.data_type == "data":
             username = payload["username"] #Get the username of the sender
+
             server.users[username]["moveX"] = 0
             server.users[username]["moveY"] = 0
 
@@ -119,7 +120,7 @@ def receive_data():
 
             rect = calculate_rect([server.users[username]["moveX"], server.users[username]["moveY"]], 
                 pygame.Rect(server.users[username]["X"], server.users[username]["Y"], 16, 16), tiles, 
-                server.users[username])
+                    server.users[username])
 
             for item in server.users["WORLD_DATA"]["items"]:
                 if pygame.Rect(item[0], item[1], item[2], item[3]).colliderect(rect):

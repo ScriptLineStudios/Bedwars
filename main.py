@@ -12,6 +12,7 @@ import random
 from typing import List
 import json
 import threading
+import os
 
 screen = pygame.display.set_mode((1000, 800))
 
@@ -23,7 +24,7 @@ iron_img.set_colorkey((255, 255, 255))
 class Game:
     FPS = 60
     def __init__(self):
-        self.client = Client("127.0.0.1", 4444)
+        self.client = Client("178.128.43.84", 4444)
         self.username = str(random.random())
 
         sign_up_request_data = {
@@ -38,6 +39,7 @@ class Game:
         self.client.send_data(request)
 
         self.payload = {
+            "id": 0,
             "username": self.username,
             "left": False, 
             "right": False,
@@ -63,6 +65,12 @@ class Game:
         self.items = []
         self.handled_items = []
 
+        self.jumping = False
+
+        self.unsigned_data = {} #Structure: id: [x, y]
+        self.received_data = []
+        self.most_recent_packet = {}
+
         with open("assets/map/map.json", "rb") as file:
             map_data = json.load(file)
         self.tiles = []
@@ -75,7 +83,7 @@ class Game:
             else:
                 self.tiles.append(Tile(rect=rect, color=(100, 100, 100), image=tile[4]))
 
-        self.player = Player(40, 200)
+        self.player = Player(40, 300)
 
         self.gui_manager = GuiManager([])  
 
@@ -95,6 +103,10 @@ class Game:
         receive_thread = threading.Thread(target=self.client.receive_data)
         receive_thread.start()
 
+        inventory_overlay = pygame.Surface((12, 12))
+
+        runtime = 0
+
         while self.running:
 
             self.display.fill((125, 233, 255))
@@ -108,6 +120,7 @@ class Game:
                         slot[1], (slot[1].get_width()/2, slot[1].get_height()/2)), 
                             ((10+i*12)+slot[1].get_width()/4 - 2, 10+slot[1].get_height()/8))
 
+            self.display.blit(inventory_overlay, (0, 0))
 
             self.events = pygame.event.get()
             for event in self.events:
@@ -117,12 +130,15 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         self.payload["jumping"] = True
-                        if self.player.is_on_ground:
-                            self.player.y_velocity -= self.player.JUMP_HEIGHT
+                        self.jumping = True
 
                     if event.key == pygame.K_o:
-                        self.player.rect.x += 200
-                        self.player.rect.y += 200
+                        os.system("clear")
+
+            if self.jumping:
+                if self.player.is_on_ground:
+                    self.player.y_velocity -= 7
+
 
 
             keys = pygame.key.get_pressed()
@@ -132,43 +148,88 @@ class Game:
             self.payload["left"] = keys[pygame.K_a]
             self.payload["right"] = keys[pygame.K_d]
 
+            self.payload["id"] = runtime
+
             json = {
                 "type": self.client.request_types["data"],
                 "payload": self.payload
             }
             request_json = self.client.create_json_object(json).encode()
             self.client.send_data(request_json)
+
             self.payload["jumping"] = False
+            self.jumping = False
+            self.unsigned_data[runtime] = [self.player.rect.x, self.player.rect.y]
 
             for name, packet in self.client.data.items(): #Handles incoming packets
                 if name == self.username:
-                    if abs((packet["X"]-packet["camX"]) - (self.player.rect.x-self.player.camera.x)) > 3:
-                         self.player.rect.x = self.lerp(self.player.rect.x, packet["X"], 0.5)
-                         self.player.camera.x = self.lerp(self.player.camera.x, packet["camX"], 0.5)
+                    pygame.draw.rect(self.display, (255, 0, 0), (packet["X"]-self.player.camera.x, packet["Y"]-self.player.camera.y, 16, 16))
+                    #pygame.draw.rect(self.display, (255, 0, 255), self.player.get_rect(), 1)
                     
-                    if abs((packet["Y"]-packet["camY"]) - (self.player.rect.y-self.player.camera.y)) > 3:
-                         self.player.rect.y = self.lerp(self.player.rect.y, packet["Y"], 0.5)
-                         self.player.camera.y = self.lerp(self.player.camera.y, packet["camY"], 0.5)
+                    #THIS SHIT MAKES NO SENSE
+                    self.most_recent_packet = packet
+                    self.received_data.append(packet)
+
+                    # try:
+                    #     if (self.player.rect.x == self.unsigned_data[packet["id"]][0] and
+                    #         self.player.rect.y == self.unsigned_data[packet["id"]][1]):
+                    #         print("Packet has been signed!")
+                    #         del self.unsigned_data[packet["id"]]
+                    #     else:
+                    #         print(len(self.unsigned_data))
+                    #         self.player.rect.x = packet["X"]
+                    #         self.player.rect.y = packet["Y"]
+                    # except:
+                    #     pass
+
                     
                 elif name == "WORLD_DATA":
-                    pass
+                    for item in packet["items"]:
+                        if item[4] not in self.handled_items:
+                            if item[-1] == "iron":
+                                self.items.append(Iron(item[0], item[1], 
+                                    item[2], item[3], iron_img, 
+                                        "iron")) #ngl this solution kinda sucks, but it will do for now...                                
 
-                    
-                    #for item in packet["items"]:
-                        # if item[4] not in self.handled_items:
-                        #     if item[-1] == "iron":
-                        #         self.items.append(Iron(item[0], item[1], 
-                        #             item[2], item[3], iron_img, 
-                        #             "iron")) #ngl this solution kinda sucks, but it will do for now...                                
-
-                        #     self.handled_items.append(item[4])
+                            self.handled_items.append(item[4])
                 else:
-                    self.display.blit(self.player.idle_images[0], (packet["X"]-self.player.camera.x, packet["Y"]-self.player.camera.y))
+                    self.client.add_to_buffer(str(name), packet)
+                    if len(self.client.buffer[str(name)]) > 10:
+                        packet = self.client.buffer[str(name)][1]
+                        prev_packet = self.client.buffer[str(name)][0]
+
+                        x = self.lerp(prev_packet["X"]-self.player.camera.x, packet["X"]-self.player.camera.x, 1)
+                        y = self.lerp(prev_packet["Y"]-self.player.camera.y, packet["Y"]-self.player.camera.y, 1)
+
+                        self.display.blit(self.player.idle_images[0], (x, y))
+                        self.client.buffer[str(name)].remove(prev_packet)
+
 
             for item in self.items:
                 item.draw(self)
 
+            for packet in self.received_data:
+                if packet["id"] in self.unsigned_data:
+                    if not self.player.is_on_ground:
+                        try:
+                            self.player.rect.y = packet["Y"]
+                        except Exception as e:
+                            print(e)
+
+
+                    if (abs(packet["X"] - self.unsigned_data[packet["id"]][0]) < 50 and 
+                            abs(packet["Y"] - self.unsigned_data[packet["id"]][1])) < 50:
+
+                        del self.unsigned_data[packet["id"]]
+                        self.received_data.remove(packet)
+                    else:
+                        self.player.rect.x = packet["X"] 
+                        self.player.rect.y = packet["Y"] 
+                        self.received_data.remove(packet)
+
+
             self.player.handle_movement(self.key_presses, self.tiles)
+
             self.player.draw(self.display)
 
             pygame.draw.circle(self.minimap, (255, 0, 0), (self.player.rect.x-self.player.camera.x, self.player.rect.y-self.player.camera.y + 255), 4)
@@ -181,6 +242,7 @@ class Game:
 
             pygame.display.flip()
             self.clock.tick(self.FPS)
+            runtime += 1
 
     @staticmethod
     def run(self):

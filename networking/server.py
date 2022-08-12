@@ -52,7 +52,7 @@ class Server:
 
         player_data = {
             "X": 40,           #0
-            "Y": 200,           #1
+            "Y": 300,           #1
             "camX": 0, 
             "camY": 0,
             "moveX": 0, 
@@ -62,7 +62,8 @@ class Server:
             "animationIndex": 0, 
             "moving": False, 
             
-            "numberPlayers": 0
+            "numberPlayers": 0,
+            "id": 0,
         }
 
         self.users[username] = player_data #Construct a new user

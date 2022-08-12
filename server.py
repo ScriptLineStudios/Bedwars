@@ -1,5 +1,4 @@
 from networking.server import Server
-from main import Game
 from scripts.tile import Tile
 
 from scripts.inventory import Iron
@@ -92,6 +91,8 @@ server.resource_spawn_points = resource_spawn_points
 
 resource_spawn_cooldown = 0
 
+buffer_time = 0
+
 def receive_data():
     while True:
         data = server.receive_data()
@@ -103,38 +104,8 @@ def receive_data():
 
         if server.data_type == "data":
             username = payload["username"] #Get the username of the sender
-
-            server.users[username]["moveX"] = 0
-            server.users[username]["moveY"] = 0
-
-            if payload["left"]:
-                server.users[username]["moveX"] -= 2
-            if payload["right"]:
-                server.users[username]["moveX"] += 2
-            if payload["jumping"]:
-                if server.users[username]["isOnGround"]:
-                    server.users[username]["yVelocity"] -= 7
-
-            if server.users[username]["yVelocity"] < 3:
-                server.users[username]["yVelocity"] += 0.2
-
-            rect = calculate_rect([server.users[username]["moveX"], server.users[username]["moveY"]], 
-                pygame.Rect(server.users[username]["X"], server.users[username]["Y"], 16, 16), tiles, 
-                    server.users[username])
-
-            for item in server.users["WORLD_DATA"]["items"]:
-                if pygame.Rect(item[0], item[1], item[2], item[3]).colliderect(rect):
-                    server.users["WORLD_DATA"]["items"].remove(item)
-                
-            server.users[username]["camX"] += (rect.x-server.users[username]["camX"]-100) / 7
-            server.users[username]["camY"] += (rect.y-server.users[username]["camY"]-75) / 7
-
-            server.users[username]["X"] = rect.x
-            server.users[username]["Y"] = rect.y
-
-            #print(server.users[username]["X"], server.users[username]["Y"])
-
-            server.users[username]["moving"] = bool(server.users[username]["moveX"]) #moving = is player moving
+            server.users[username]["X"] = payload["X"]
+            server.users[username]["Y"] = payload["Y"]
 
 thread = threading.Thread(target = receive_data).start()
 
@@ -149,4 +120,8 @@ while True:
     for i, item in enumerate(server.users["WORLD_DATA"]["items"]):
         server.users["WORLD_DATA"]["items"][i][3] += 1
 
-    server.distribute_data() #Distribute the updated user packet to all connected clients
+    if buffer_time <= 0:
+        server.distribute_data() #Distribute the updated user packet to all connected clients
+        buffer_time = 1000
+    else:
+        buffer_time -= 1

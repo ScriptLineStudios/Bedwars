@@ -23,7 +23,7 @@ iron_img.set_colorkey((255, 255, 255))
 class Game:
     FPS = 60
     def __init__(self):
-        self.client = Client("127.0.0.1", 4444)
+        self.client = Client("178.128.43.84", 4444)
         self.username = str(random.random())
 
         sign_up_request_data = {
@@ -39,9 +39,8 @@ class Game:
 
         self.payload = {
             "username": self.username,
-            "left": False, 
-            "right": False,
-            "jumping": False
+            "X": 40,
+            "Y": 200
         }
 
         self.camera = [0, 0]
@@ -121,16 +120,15 @@ class Game:
                             self.player.y_velocity -= self.player.JUMP_HEIGHT
 
                     if event.key == pygame.K_o:
-                        self.player.rect.x += 200
-                        self.player.rect.y += 200
+                        print(self.client.buffer)
 
 
             keys = pygame.key.get_pressed()
             self.key_presses["a"] = keys[pygame.K_a]
             self.key_presses["d"] = keys[pygame.K_d]
 
-            self.payload["left"] = keys[pygame.K_a]
-            self.payload["right"] = keys[pygame.K_d]
+            self.payload["X"] = self.player.rect.x
+            self.payload["Y"] = self.player.rect.y
 
             json = {
                 "type": self.client.request_types["data"],
@@ -138,18 +136,11 @@ class Game:
             }
             request_json = self.client.create_json_object(json).encode()
             self.client.send_data(request_json)
-            self.payload["jumping"] = False
+
 
             for name, packet in self.client.data.items(): #Handles incoming packets
                 if name == self.username:
-                    if abs((packet["X"]-packet["camX"]) - (self.player.rect.x-self.player.camera.x)) > 3:
-                         self.player.rect.x = self.lerp(self.player.rect.x, packet["X"], 0.5)
-                         self.player.camera.x = self.lerp(self.player.camera.x, packet["camX"], 0.5)
-                    
-                    if abs((packet["Y"]-packet["camY"]) - (self.player.rect.y-self.player.camera.y)) > 3:
-                         self.player.rect.y = self.lerp(self.player.rect.y, packet["Y"], 0.5)
-                         self.player.camera.y = self.lerp(self.player.camera.y, packet["camY"], 0.5)
-                    
+                    pass
                 elif name == "WORLD_DATA":
                     pass
 
@@ -163,7 +154,26 @@ class Game:
 
                         #     self.handled_items.append(item[4])
                 else:
-                    self.display.blit(self.player.idle_images[0], (packet["X"]-self.player.camera.x, packet["Y"]-self.player.camera.y))
+                    self.client.add_to_buffer(str(name), packet)
+                    for packet in self.client.buffer[str(name)]:
+                        pygame.draw.circle(
+                            self.display,
+                            (255, 100, 40),
+                            (packet["X"]-self.player.camera.x, packet["Y"]-self.player.camera.y),
+                            2
+                        )
+                    if len(self.client.buffer[str(name)]) > 50:
+                        packet = self.client.buffer[str(name)][1]
+                        prev_packet = self.client.buffer[str(name)][0]
+
+                        x = self.lerp(prev_packet["X"], packet["X"], 1)
+                        y = self.lerp(prev_packet["Y"], packet["Y"], 1)
+
+                        self.display.blit(self.player.idle_images[0], (x-self.player.camera.x, 
+                            y-self.player.camera.y))
+                        self.client.buffer[str(name)].remove(prev_packet)
+
+
 
             for item in self.items:
                 item.draw(self)
